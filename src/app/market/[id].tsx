@@ -10,6 +10,8 @@ import { Details, PropsDetails } from "@/components/market/details";
 import { api } from "@/services/api";
 import { CameraView, useCameraPermissions } from "expo-camera";
 
+//import { MapContainer, TileLayer, useMap } from 'react-leaflet'
+
 type DataProps = PropsDetails & {
   cover: string
 }
@@ -17,7 +19,7 @@ type DataProps = PropsDetails & {
 export default function Market() {
   const [data, setData] = useState<DataProps>()
   const [isVisibleCameraModal, setIsVisibleCameraModal] = useState(false)
-  const [coupon, setCoupon] = useState<string | null>(null)
+  const [coupons, setCoupons] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [couponIsFetching, setCouponIsFetching] = useState(false)
   const [_, requestPermission] = useCameraPermissions()
@@ -41,12 +43,12 @@ export default function Market() {
     }
   }
 
-  const getCoupon = async (id: string) => {
+  const getCoupons = async (id: string) => {
     try {
       setCouponIsFetching(true)
       const { data } = await api.patch("/coupons/" + id)
-      Alert.alert("Cupom", data.coupon)
-      setCoupon(data.coupon)
+      Alert.alert("Cupom", data.coupons)
+      setCoupons(data.coupons)
     } catch (error) {
       console.log(error)
       Alert.alert("Erro", "Não foi possível utilizar o cupom")
@@ -55,14 +57,14 @@ export default function Market() {
     }
   }
 
-  const handleUseCoupon = (id: string) => {
+  const handleUseCoupons = (id: string) => {
     setIsVisibleCameraModal(false)
     Alert.alert(
       "Cupom",
       "Não é possível reutilizar um cupom resgatado. Deseja realmente resgatar o cupom?",
       [
         { style: "cancel", text: "Não" },
-        { text: "Sim", onPress: () => getCoupon(id) },
+        { text: "Sim", onPress: () => getCoupons(id) },
       ]
     )
   }
@@ -85,7 +87,7 @@ export default function Market() {
 
   useEffect(() => {
     fetchMarket()
-  }, [params.id, coupon])
+  }, [params.id, coupons])
   
   if (isLoading) {
     return <Loading />
@@ -102,7 +104,7 @@ export default function Market() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <Cover uri={data.cover} />
         <Details data={data} />
-        {coupon && <Coupon code={coupon} />}
+        {coupons && <Coupon code={coupons} />}
       </ScrollView>
 
       <View style={{ padding: 32 }}>
@@ -116,9 +118,10 @@ export default function Market() {
           style={{ flex: 1 }}
           facing="back"
           onBarcodeScanned={({ data }) => {
+            console.log('data', data);
             if (data && !qrLock.current) {
               qrLock.current = true
-              setTimeout(() => handleUseCoupon(data), 500)
+              setTimeout(() => handleUseCoupons(data), 500)
             }
           }}
         />
